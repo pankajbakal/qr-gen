@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>LogoPay — Library Playground</title>
+<script src="logopay.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#09090f;--surf:#111118;--surf2:#16161f;--bdr:#1e1e2c;
+  --txt:#eeedf2;--muted:#55546a;--gold:#f0c040;--red:#ff4466;--green:#22dd88;--blue:#4da6ff;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);color:var(--txt);font-family:'Space Mono',monospace;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.012) 1px,transparent 1px),
+                  linear-gradient(90deg,rgba(255,255,255,.012) 1px,transparent 1px);
+  background-size:28px 28px;}
+
+/* Layout */
+.shell{display:grid;grid-template-columns:300px 1fr;min-height:100vh;}
+@media(max-width:768px){.shell{grid-template-columns:1fr;}}
+
+/* Sidebar */
+.sidebar{background:var(--surf);border-right:1px solid var(--bdr);padding:28px 20px;overflow-y:auto;position:sticky;top:0;height:100vh;}
+@media(max-width:768px){.sidebar{height:auto;position:relative;border-right:none;border-bottom:1px solid var(--bdr);}}
+
+.logo-mark{font-size:9px;letter-spacing:5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.logo-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-1px;margin-bottom:4px;}
+.logo-title em{font-style:normal;background:linear-gradient(120deg,var(--gold),#ff8844);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo-ver{font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:24px;}
+
+.section-head{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:20px 0 10px;padding-top:16px;border-top:1px solid var(--bdr);}
+.section-head:first-of-type{border-top:none;padding-top:0;margin-top:0;}
+
+/* Tab switcher */
+.tabs{display:flex;gap:6px;margin-bottom:18px;}
+.tab{flex:1;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;padding:9px 6px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:all .2s;text-align:center;}
+.tab.active{background:var(--gold);color:#000;border-color:var(--gold);font-weight:700;}
+
+/* Form elements */
+.fld{margin-bottom:11px;}
+.fld label{display:block;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.fld input,.fld select,.fld textarea{
+  width:100%;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;
+  color:var(--txt);font-family:'Space Mono',monospace;font-size:12px;padding:9px 11px;
+  outline:none;transition:border-color .2s;-webkit-appearance:none;resize:vertical;
+}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--gold);}
+.fld input::placeholder,.fld textarea::placeholder{color:var(--muted);opacity:.4;}
+.fld input[type=range]{padding:4px 0;accent-color:var(--gold);}
+.fld input[type=color]{padding:3px;height:36px;cursor:pointer;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+/* Upload area */
+.upload-area{border:1.5px dashed var(--bdr);border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;}
+.upload-area:hover{border-color:var(--gold);color:var(--gold);}
+.upload-area input{display:none;}
+.upload-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
+.ubtn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;border-radius:6px;cursor:pointer;border:1px solid var(--bdr);background:var(--bg);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);transition:all .2s;}
+.ubtn:hover,.ubtn:active{border-color:var(--gold);color:var(--gold);}
+.ubtn svg{width:18px;height:18px;}
+.ubtn input{display:none;}
+#imgPreview{display:none;width:100%;max-height:60px;object-fit:contain;border-radius:4px;background:#000;margin-bottom:8px;padding:4px;}
+
+/* Generate button */
+.gbtn{width:100%;background:linear-gradient(135deg,var(--gold),#ff8844);color:#000;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;letter-spacing:1px;padding:14px;cursor:pointer;text-transform:uppercase;transition:all .2s;margin-top:6px;}
+.gbtn:active{transform:scale(.97);}
+.gbtn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* Main content */
+.main{padding:32px 28px;display:flex;flex-direction:column;gap:24px;}
+@media(max-width:768px){.main{padding:20px 16px;}}
+
+.main-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.main-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-0.5px;}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(34,221,136,.08);border:1px solid rgba(34,221,136,.2);border-radius:20px;padding:5px 12px;font-size:9px;letter-spacing:3px;color:var(--green);}
+.badge .dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* Output canvas */
+.output-box{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;}
+.output-top{padding:16px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;}
+.output-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-weight:700;}
+.output-meta{font-size:9px;color:var(--muted);letter-spacing:1px;}
+.output-canvas-wrap{background:#fff;display:flex;align-items:center;justify-content:center;padding:24px;min-height:320px;}
+.output-canvas-wrap canvas{max-width:100%;height:auto;display:block;}
+#placeholder{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;line-height:2;padding:40px;}
+
+/* Download bar */
+.dl-bar{padding:14px 20px;border-top:1px solid var(--bdr);display:flex;gap:8px;flex-wrap:wrap;}
+.dl-btn{background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;color:var(--txt);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;padding:10px 14px;cursor:pointer;text-transform:uppercase;font-weight:700;transition:all .2s;}
+.dl-btn:hover{border-color:var(--gold);color:var(--gold);}
+.dl-btn.primary{background:var(--gold);color:#000;border-color:var(--gold);}
+.dl-btn.primary:hover{background:#f5d550;}
+
+/* Size presets */
+.preset-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;}
+.preset{background:var(--bg);border:1px solid var(--bdr);border-radius:6px;padding:8px 4px;text-align:center;cursor:pointer;transition:all .2s;font-size:9px;letter-spacing:.5px;color:var(--muted);}
+.preset:hover,.preset.active{border-color:var(--gold);color:var(--gold);}
+.preset span{display:block;font-size:8px;color:var(--muted);margin-top:2px;}
+
+/* Code block */
+.code-card{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;}
+.code-top{padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;}
+.code-title{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+.copy-btn{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;background:none;border:1px solid var(--bdr);border-radius:4px;color:var(--muted);padding:4px 10px;cursor:pointer;transition:all .2s;text-transform:uppercase;}
+.copy-btn:hover{border-color:var(--gold);color:var(--gold);}
+pre{padding:16px;font-size:11px;line-height:1.8;color:#a8e6cf;overflow-x:auto;background:var(--bg);}
+pre .kw{color:var(--gold);} pre .str{color:#ff8844;} pre .cm{color:var(--muted);}
+pre .fn{color:var(--blue);} pre .num{color:var(--green);}
+
+/* Error */
+#errbox{display:none;background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.3);border-radius:8px;padding:11px 14px;font-size:11px;color:var(--red);line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ═══ SIDEBAR ═══════════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="logo-mark">◈ Library</div>
+  <div class="logo-title">Logo<em>Pay</em></div>
+  <div class="logo-ver">v1.0.0 · MIT License</div>
+
+  <!-- Mode tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchMode('qr',this)">QR Code</button>
+    <button class="tab" onclick="switchMode('bar',this)">Barcode</button>
+    <button class="tab" onclick="switchMode('img',this)">Image</button>
+  </div>
+
+  <!-- Image upload (shown for QR + Barcode modes) -->
+  <div id="uploadSection">
+    <div class="section-head">Logo / Image</div>
+    <div class="upload-btns">
+      <label class="ubtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Camera
+        <input type="file" accept="image/*" capture="environment" onchange="loadImage(this.files[0])">
+      </label>
+      <label class="ubtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Gallery
+        <input type="file" accept="image/*" onchange="loadImage(this.files[0])">
+      </label>
+    </div>
+    <div class="upload-area" id="dropZone">drop image here</div>
+    <img id="imgPreview" alt="preview">
+  </div>
+
+  <!-- QR Settings -->
+  <div id="qrSettings">
+    <div class="section-head">QR Data</div>
+    <div class="fld"><label>Text / URL / Payment Data</label>
+      <textarea id="qrText" rows="3" placeholder="https://pay.example.com&#10;or any text…"></textarea>
+    </div>
+    <div class="section-head">Size</div>
+    <div class="preset-grid" id="qrPresets">
+      <div class="preset" onclick="setSize(200,'qr',this)">200<span>Small</span></div>
+      <div class="preset active" onclick="setSize(400,'qr',this)">400<span>Default</span></div>
+      <div class="preset" onclick="setSize(600,'qr',this)">600<span>Medium</span></div>
+      <div class="preset" onclick="setSize(800,'qr',this)">800<span>Large</span></div>
+      <div class="preset" onclick="setSize(1200,'qr',this)">1200<span>Print</span></div>
+      <div class="preset" onclick="setSize(0,'qr',this)" id="qrCustomPreset">Custom</div>
+    </div>
+    <div class="fld" id="qrCustomSize" style="display:none"><label>Custom Size (px)</label>
+      <input type="number" id="qrSizePx" value="400" min="100" max="4000">
+    </div>
+    <div class="section-head">Style</div>
+    <div class="row2">
+      <div class="fld"><label>Dark Color</label><input type="color" id="qrDark" value="#000000"></div>
+      <div class="fld"><label>Corner Radius</label><input type="range" id="qrRadius" min="0" max="0.45" step="0.05" value="0.15"></div>
+    </div>
+  </div>
+
+  <!-- Barcode Settings -->
+  <div id="barSettings" style="display:none">
+    <div class="section-head">Barcode Data</div>
+    <div class="fld"><label>Text to Encode</label>
+      <input type="text" id="barText" placeholder="Printable ASCII text…">
+    </div>
+    <div class="section-head">Dimensions</div>
+    <div class="row2">
+      <div class="fld"><label>Width (px)</label><input type="number" id="barW" value="600" min="200" max="4000"></div>
+      <div class="fld"><label>Height (px)</label><input type="number" id="barH" value="150" min="60" max="800"></div>
+    </div>
+    <div class="fld"><label>Bar Scale (px per unit)</label>
+      <input type="range" id="barScale" min="1" max="6" step="1" value="3">
+    </div>
+    <div class="fld"><label>Show Text Below</label>
+      <select id="barText2"><option value="1">Yes</option><option value="0">No</option></select>
+    </div>
+    <div class="fld"><label>Bar Color</label><input type="color" id="barDark" value="#000000"></div>
+  </div>
+
+  <!-- Image Tool Settings -->
+  <div id="imgSettings" style="display:none">
+    <div class="section-head">Source Image</div>
+    <div class="upload-btns">
+      <label class="ubtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Camera
+        <input type="file" accept="image/*" capture="environment" onchange="loadImageTool(this.files[0])">
+      </label>
+      <label class="ubtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Gallery
+        <input type="file" accept="image/*" onchange="loadImageTool(this.files[0])">
+      </label>
+    </div>
+    <img id="imgToolPreview" style="display:none;width:100%;max-height:60px;object-fit:contain;border-radius:4px;background:#000;margin-bottom:8px;padding:4px;" alt="preview">
+
+    <div class="section-head">Resize</div>
+    <div class="preset-grid">
+      <div class="preset" onclick="setImgSize(64,64,this)">64<span>Icon</span></div>
+      <div class="preset" onclick="setImgSize(128,128,this)">128<span>Thumb</span></div>
+      <div class="preset" onclick="setImgSize(256,256,this)">256<span>Small</span></div>
+      <div class="preset" onclick="setImgSize(512,512,this)">512<span>Medium</span></div>
+      <div class="preset" onclick="setImgSize(1024,1024,this)">1024<span>Large</span></div>
+      <div class="preset" onclick="setImgSize(0,0,this)" id="imgCustomPreset">Custom</div>
+    </div>
+    <div id="imgCustomSize" style="display:none">
+      <div class="row2">
+        <div class="fld"><label>Width</label><input type="number" id="imgW" value="400" min="1" max="8000"></div>
+        <div class="fld"><label>Height</label><input type="number" id="imgH" value="400" min="1" max="8000"></div>
+      </div>
+    </div>
+    <div class="fld"><label>Resize Mode</label>
+      <select id="imgMode">
+        <option value="fit">Fit (letterbox)</option>
+        <option value="fill">Fill (crop center)</option>
+        <option value="stretch">Stretch</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="errbox"></div>
+  <button class="gbtn" id="genbtn" onclick="generate()">Generate →</button>
+</aside>
+
+<!-- ═══ MAIN ══════════════════════════════════════════════════ -->
+<main class="main">
+
+  <div class="main-header">
+    <div class="main-title" id="mainTitle">QR Code Generator</div>
+    <div class="badge" id="statusBadge" style="display:none"><span class="dot"></span> <span id="badgeText">Ready</span></div>
+  </div>
+
+  <!-- Output -->
+  <div class="output-box">
+    <div class="output-top">
+      <span class="output-label">Output</span>
+      <span class="output-meta" id="outputMeta">—</span>
+    </div>
+    <div class="output-canvas-wrap" id="outputWrap">
+      <div id="placeholder">
+        Upload an image and enter your data,<br>then click <b>Generate</b>
+      </div>
+    </div>
+    <div class="dl-bar" id="dlBar" style="display:none">
+      <button class="dl-btn primary" onclick="doDownload('png')">↓ PNG</button>
+      <button class="dl-btn" onclick="doDownload('jpeg')">↓ JPEG</button>
+      <button class="dl-btn" onclick="doDownload('svg')">↓ SVG</button>
+      <button class="dl-btn" onclick="doDownload('webp')">↓ WebP</button>
+    </div>
+  </div>
+
+  <!-- Code example -->
+  <div class="code-card">
+    <div class="code-top">
+      <span class="code-title">Usage Example</span>
+      <button class="copy-btn" onclick="copyCode()">Copy</button>
+    </div>
+    <pre id="codeBlock"><span class="cm">// Include the library</span>
+<span class="cm">// &lt;script src="logopay.js"&gt;&lt;/script&gt;</span>
+
+<span class="cm">// ── QR Code with logo ──────────────────────</span>
+<span class="kw">const</span> img = <span class="kw">new</span> <span class="fn">Image</span>();
+img.src = <span class="str">'logo.png'</span>;
+img.onload = () => {
+  <span class="kw">const</span> qr = LogoPay.<span class="fn">QRCode</span>({
+    text:   <span class="str">'PMT|USD|0000010000|MCH-12345'</span>,
+    image:  img,
+    size:   <span class="num">400</span>,         <span class="cm">// pixels</span>
+    darkColor: <span class="str">'#000000'</span>,
+    cornerRadius: <span class="num">0.15</span>,
+  });
+  document.body.<span class="fn">appendChild</span>(qr.canvas);
+  qr.<span class="fn">download</span>(<span class="str">'payment-qr'</span>, <span class="str">'png'</span>);  <span class="cm">// or 'svg'</span>
+  qr.<span class="fn">download</span>(<span class="str">'payment-qr'</span>, <span class="str">'svg'</span>);
+};
+
+<span class="cm">// ── Barcode ────────────────────────────────</span>
+<span class="kw">const</span> bc = LogoPay.<span class="fn">Barcode</span>({
+  text:   <span class="str">'INV-2024-0088'</span>,
+  image:  img,
+  width:  <span class="num">600</span>,
+  height: <span class="num">150</span>,
+  barScale: <span class="num">3</span>,
+});
+bc.<span class="fn">download</span>(<span class="str">'barcode'</span>, <span class="str">'svg'</span>);
+
+<span class="cm">// ── ImageTool — resize + convert ───────────</span>
+<span class="kw">const</span> tool = LogoPay.<span class="fn">ImageTool</span>();
+tool.<span class="fn">load</span>(file)
+  .then(t => t.<span class="fn">resize</span>(<span class="num">512</span>, <span class="num">512</span>, <span class="str">'fill'</span>))
+  .then(t => t.<span class="fn">download</span>(<span class="str">'resized'</span>, <span class="str">'png'</span>));
+
+<span class="cm">// toSVG() works on all three:</span>
+<span class="kw">const</span> svg = qr.<span class="fn">toSVG</span>();        <span class="cm">// SVG string</span>
+<span class="kw">const</span> url = qr.<span class="fn">toDataURL</span>();   <span class="cm">// base64 PNG</span></pre>
+  </div>
+
+</main>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────
+let mode       = 'qr';
+let logoImgEl  = null;
+let imgToolFile= null;
+let currentResult = null;
+let currentMode   = 'qr';
+let qrSizePx   = 400;
+let imgTargetW = 512, imgTargetH = 512;
+const titles   = { qr: 'QR Code Generator', bar: 'Code-128 Barcode Generator', img: 'Image Tool' };
+
+// ── Mode switch ────────────────────────────────────────────────
+function switchMode(m, btn) {
+  mode = m; currentMode = m;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('qrSettings').style.display   = m === 'qr'  ? '' : 'none';
+  document.getElementById('barSettings').style.display  = m === 'bar' ? '' : 'none';
+  document.getElementById('imgSettings').style.display  = m === 'img' ? '' : 'none';
+  document.getElementById('uploadSection').style.display= m === 'img' ? 'none' : '';
+  document.getElementById('mainTitle').textContent = titles[m];
+  updateCodeExample(m);
+}
+
+// ── Image loading (for QR/Barcode logo) ───────────────────────
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor = 'var(--gold)'; });
+dz.addEventListener('dragleave', () => dz.style.borderColor = '');
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.style.borderColor = '';
+  if (e.dataTransfer.files[0]) loadImage(e.dataTransfer.files[0]);
+});
+dz.addEventListener('click', () => {
+  const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*';
+  i.onchange = () => { if (i.files[0]) loadImage(i.files[0]); }; i.click();
+});
+
+function loadImage(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      logoImgEl = img;
+      const prev = document.getElementById('imgPreview');
+      prev.src = ev.target.result; prev.style.display = 'block';
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadImageTool(file) {
+  if (!file) return;
+  imgToolFile = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const p = document.getElementById('imgToolPreview');
+    p.src = ev.target.result; p.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Size presets ───────────────────────────────────────────────
+function setSize(px, type, el) {
+  document.querySelectorAll('#qrPresets .preset').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const customBox = document.getElementById('qrCustomSize');
+  if (px === 0) { customBox.style.display = 'block'; }
+  else          { customBox.style.display = 'none'; qrSizePx = px; }
+}
+
+function setImgSize(w, h, el) {
+  document.querySelectorAll('#imgSettings .preset').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const customBox = document.getElementById('imgCustomSize');
+  if (w === 0) { customBox.style.display = 'block'; }
+  else {
+    customBox.style.display = 'none';
+    imgTargetW = w; imgTargetH = h;
+    document.getElementById('imgW').value = w;
+    document.getElementById('imgH').value = h;
+  }
+}
+
+// ── Generate ───────────────────────────────────────────────────
+function showErr(msg) { const b = document.getElementById('errbox'); b.textContent = msg; b.style.display = 'block'; }
+function clearErr()   { document.getElementById('errbox').style.display = 'none'; }
+
+function generate() {
+  clearErr();
+  const btn = document.getElementById('genbtn');
+  btn.disabled = true; btn.textContent = 'Generating…';
+
+  setTimeout(() => {
+    try {
+      if (mode === 'qr')  doGenerateQR();
+      else if (mode === 'bar') doGenerateBar();
+      else if (mode === 'img') doGenerateImg();
+    } catch(e) {
+      showErr('Error: ' + e.message);
+      console.error(e);
+    }
+    btn.disabled = false; btn.textContent = 'Generate →';
+  }, 20);
+}
+
+function doGenerateQR() {
+  const text = document.getElementById('qrText').value.trim();
+  if (!text) { showErr('Please enter text or data to encode.'); return; }
+  const sz = document.getElementById('qrCustomSize').style.display === 'block'
+    ? parseInt(document.getElementById('qrSizePx').value) || 400 : qrSizePx;
+
+  const result = LogoPay.QRCode({
+    text,
+    image: logoImgEl || null,
+    size:  sz,
+    darkColor:    document.getElementById('qrDark').value,
+    cornerRadius: parseFloat(document.getElementById('qrRadius').value),
+  });
+
+  currentResult = result;
+  showCanvas(result.canvas, `QR v${result.meta.version} · ${sz}×${sz}px · ${text.length} chars`);
+}
+
+function doGenerateBar() {
+  const text = document.getElementById('barText').value.trim();
+  if (!text) { showErr('Please enter text to encode.'); return; }
+
+  const result = LogoPay.Barcode({
+    text,
+    image:    logoImgEl || null,
+    width:    parseInt(document.getElementById('barW').value)   || 600,
+    height:   parseInt(document.getElementById('barH').value)   || 150,
+    barScale: parseInt(document.getElementById('barScale').value) || 3,
+    showText: document.getElementById('barText2').value === '1',
+    darkColor: document.getElementById('barDark').value,
+  });
+
+  currentResult = result;
+  showCanvas(result.canvas, `Code-128 · ${result.canvas.width}×${result.canvas.height}px`);
+}
+
+function doGenerateImg() {
+  if (!imgToolFile) { showErr('Please upload a source image first.'); return; }
+  const w = parseInt(document.getElementById('imgW').value) || 512;
+  const h = parseInt(document.getElementById('imgH').value) || 512;
+  const m = document.getElementById('imgMode').value;
+
+  const tool = LogoPay.ImageTool();
+  tool.load(imgToolFile).then(t => {
+    t.resize(w, h, m);
+    currentResult = t;
+    showCanvas(t.toCanvas(), `Image · ${t.toCanvas().width}×${t.toCanvas().height}px`);
+  }).catch(e => showErr('Image error: ' + e.message));
+}
+
+function showCanvas(canvas, meta) {
+  const wrap = document.getElementById('outputWrap');
+  document.getElementById('placeholder').style.display = 'none';
+  // Remove old canvas
+  const old = wrap.querySelector('canvas');
+  if (old) old.remove();
+  wrap.appendChild(canvas);
+  document.getElementById('outputMeta').textContent = meta;
+  document.getElementById('dlBar').style.display = 'flex';
+  document.getElementById('statusBadge').style.display = 'inline-flex';
+  document.getElementById('badgeText').textContent = 'Ready';
+}
+
+// ── Download ───────────────────────────────────────────────────
+const dlNames = { qr: 'logopay-qr', bar: 'logopay-barcode', img: 'logopay-image' };
+function doDownload(fmt) {
+  if (!currentResult) return;
+  const name = dlNames[currentMode] || 'logopay-output';
+  if (typeof currentResult.download === 'function') {
+    currentResult.download(name, fmt);
+  }
+}
+
+// ── Code examples ──────────────────────────────────────────────
+const codeExamples = {
+qr: `<span class="cm">// ── QR Code with logo fill ────────────────</span>
+<span class="kw">const</span> img = <span class="kw">new</span> <span class="fn">Image</span>();
+img.src = <span class="str">'logo.png'</span>;
+img.onload = () => {
+  <span class="kw">const</span> qr = LogoPay.<span class="fn">QRCode</span>({
+    text:         <span class="str">'https://pay.example.com/inv/0088'</span>,
+    image:        img,
+    size:         <span class="num">400</span>,
+    darkColor:    <span class="str">'#000000'</span>,
+    cornerRadius: <span class="num">0.15</span>,
+    logoBrightness: <span class="num">1.1</span>,
+    logoSaturation: <span class="num">1.3</span>,
+  });
+  <span class="cm">// Append canvas to page</span>
+  document.body.<span class="fn">appendChild</span>(qr.canvas);
+  <span class="cm">// Download as PNG or SVG</span>
+  qr.<span class="fn">download</span>(<span class="str">'payment-qr'</span>, <span class="str">'png'</span>);
+  qr.<span class="fn">download</span>(<span class="str">'payment-qr'</span>, <span class="str">'svg'</span>);
+  <span class="cm">// Or get raw data URL</span>
+  <span class="kw">const</span> url = qr.<span class="fn">toDataURL</span>(<span class="str">'image/png'</span>);
+  <span class="cm">// Or get SVG string</span>
+  <span class="kw">const</span> svg = qr.<span class="fn">toSVG</span>();
+};`,
+
+bar: `<span class="cm">// ── Code-128 Barcode with logo fill ───────</span>
+<span class="kw">const</span> bc = LogoPay.<span class="fn">Barcode</span>({
+  text:      <span class="str">'INV-2024-0088'</span>,
+  image:     img,           <span class="cm">// optional logo</span>
+  width:     <span class="num">600</span>,          <span class="cm">// canvas width px</span>
+  height:    <span class="num">150</span>,          <span class="cm">// canvas height px</span>
+  barScale:  <span class="num">3</span>,            <span class="cm">// px per narrow bar</span>
+  showText:  <span class="kw">true</span>,
+  darkColor: <span class="str">'#000000'</span>,
+  logoBrightness: <span class="num">1.1</span>,
+});
+bc.<span class="fn">download</span>(<span class="str">'barcode'</span>, <span class="str">'svg'</span>);
+<span class="kw">const</span> svg = bc.<span class="fn">toSVG</span>();`,
+
+img: `<span class="cm">// ── ImageTool — resize & convert ──────────</span>
+<span class="kw">const</span> tool = LogoPay.<span class="fn">ImageTool</span>();
+
+<span class="cm">// Load from File input</span>
+tool.<span class="fn">load</span>(fileInputEl.files[<span class="num">0</span>])
+  .then(t => t.<span class="fn">resize</span>(<span class="num">512</span>, <span class="num">512</span>, <span class="str">'fill'</span>))
+  .then(t => {
+    t.<span class="fn">download</span>(<span class="str">'output'</span>, <span class="str">'png'</span>);   <span class="cm">// PNG</span>
+    t.<span class="fn">download</span>(<span class="str">'output'</span>, <span class="str">'svg'</span>);   <span class="cm">// SVG (embedded)</span>
+    t.<span class="fn">download</span>(<span class="str">'output'</span>, <span class="str">'jpeg'</span>);  <span class="cm">// JPEG</span>
+    t.<span class="fn">download</span>(<span class="str">'output'</span>, <span class="str">'webp'</span>);  <span class="cm">// WebP</span>
+  });
+
+<span class="cm">// Resize modes: 'fit' | 'fill' | 'stretch'</span>
+<span class="cm">// toCanvas() → HTMLCanvasElement</span>
+<span class="cm">// toDataURL() → base64 string</span>
+<span class="cm">// toSVG() → SVG string</span>
+<span class="cm">// toBlob() → Promise&lt;Blob&gt;</span>`,
+};
+
+function updateCodeExample(m) {
+  document.getElementById('codeBlock').innerHTML = codeExamples[m] || codeExamples.qr;
+}
+
+function copyCode() {
+  const text = document.getElementById('codeBlock').innerText;
+  navigator.clipboard?.writeText(text).catch(() => {
+    const t = document.createElement('textarea'); t.value = text;
+    document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t);
+  });
+  const b = document.querySelector('.copy-btn'); const o = b.textContent;
+  b.textContent = '✓ Copied'; setTimeout(() => b.textContent = o, 1500);
+}
+</script>
+</body>
+</html>
