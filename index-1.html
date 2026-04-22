@@ -173,6 +173,12 @@ pre .fn{color:var(--blue);} pre .num{color:var(--green);}
       <div class="fld"><label>Dark Color</label><input type="color" id="qrDark" value="#000000"></div>
       <div class="fld"><label>Corner Radius</label><input type="range" id="qrRadius" min="0" max="0.45" step="0.05" value="0.15"></div>
     </div>
+    <div class="fld"><label>Image Mode</label>
+      <select id="qrImageMode">
+        <option value="fill">Fill (stretch)</option>
+        <option value="clip">Clip (cover)</option>
+      </select>
+    </div>
   </div>
 
   <!-- Barcode Settings -->
@@ -193,6 +199,12 @@ pre .fn{color:var(--blue);} pre .num{color:var(--green);}
       <select id="barText2"><option value="1">Yes</option><option value="0">No</option></select>
     </div>
     <div class="fld"><label>Bar Color</label><input type="color" id="barDark" value="#000000"></div>
+    <div class="fld"><label>Image Mode</label>
+      <select id="barImageMode">
+        <option value="fill">Fill (stretch)</option>
+        <option value="clip">Clip (cover)</option>
+      </select>
+    </div>
   </div>
 
   <!-- Image Tool Settings -->
@@ -435,6 +447,7 @@ function doGenerateQR() {
     size:  sz,
     darkColor:    document.getElementById('qrDark').value,
     cornerRadius: parseFloat(document.getElementById('qrRadius').value),
+    imageMode:    document.getElementById('qrImageMode').value,
   });
 
   currentResult = result;
@@ -453,6 +466,7 @@ function doGenerateBar() {
     barScale: parseInt(document.getElementById('barScale').value) || 3,
     showText: document.getElementById('barText2').value === '1',
     darkColor: document.getElementById('barDark').value,
+    imageMode: document.getElementById('barImageMode').value,
   });
 
   currentResult = result;

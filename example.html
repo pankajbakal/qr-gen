@@ -201,6 +201,13 @@
       <label>Corner radius (0–0.45)</label>
       <input type="range" id="qrRadius" min="0" max="0.45" step="0.05" value="0.15">
     </div>
+    <div>
+      <label>Image mode</label>
+      <select id="qrImageMode">
+        <option value="fill">Fill (stretch)</option>
+        <option value="clip">Clip (cover)</option>
+      </select>
+    </div>
   </div>
 
   <button class="btn" onclick="generateQR()">Generate QR Code →</button>
@@ -282,6 +289,13 @@ img.onload = () => {
       <select id="barShowText">
         <option value="1">Yes</option>
         <option value="0">No</option>
+      </select>
+    </div>
+    <div>
+      <label>Image mode</label>
+      <select id="barImageMode">
+        <option value="fill">Fill (stretch)</option>
+        <option value="clip">Clip (cover)</option>
       </select>
     </div>
   </div>
@@ -432,6 +446,7 @@ function generateQR() {
       size:         parseInt(document.getElementById('qrSize').value, 10) || 400,
       darkColor:    document.getElementById('qrDark').value,
       cornerRadius: parseFloat(document.getElementById('qrRadius').value),
+      imageMode:    document.getElementById('qrImageMode').value,
     });
 
     var wrap = document.getElementById('qrCanvasWrap');
@@ -460,6 +475,7 @@ function generateBarcode() {
       barScale:  parseInt(document.getElementById('barScale').value, 10) || 3,
       darkColor: document.getElementById('barDark').value,
       showText:  document.getElementById('barShowText').value === '1',
+      imageMode: document.getElementById('barImageMode').value,
     });
 
     var wrap = document.getElementById('barCanvasWrap');
