@@ -14,14 +14,20 @@
  */
 
 (function (root, factory) {
+  var lib = factory();
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = factory();          // CommonJS / Node
+    module.exports = lib;                // CommonJS / Node
   } else if (typeof define === 'function' && define.amd) {
-    define([], factory);                 // AMD
-  } else {
-    root.LogoPay = factory();            // Browser global
+    define([], function () { return lib; }); // AMD
   }
-}(typeof self !== 'undefined' ? self : this, function () {
+  // Always expose as a browser global so that plain <script> usage works
+  // even in environments where module / define are also present (e.g. Electron).
+  if (typeof window !== 'undefined') {
+    window.LogoPay = lib;
+  } else {
+    root.LogoPay = lib;
+  }
+}(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this), function () {
   'use strict';
 
   // ═══════════════════════════════════════════════════════════════
