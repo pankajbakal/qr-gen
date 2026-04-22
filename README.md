@@ -39,6 +39,7 @@ Generates a logo-filled QR code (ECC Medium, versions 1–7).
 | `logoBrightness` | number | `1.1` | Logo brightness filter |
 | `logoSaturation` | number | `1.3` | Logo saturation filter |
 | `lightModuleOpacity` | number | `0.5` | White overlay opacity 0-1 blended over the QR data area to keep light modules clearly brighter than dark modules. Increase toward `1` for better scannability with dark logos; decrease toward `0` for more logo color saturation. |
+| `imageMode` | string | `'fill'` | How the logo fills the QR canvas: `'fill'` stretches the image to fit; `'clip'` scales to cover and crops the overflow (preserves aspect ratio) |
 
 **Returns:**
 ```js
@@ -87,6 +88,7 @@ Generates a logo-filled Code-128 barcode.
 | `logoBrightness` | number | `1.1` | Logo brightness |
 | `logoSaturation` | number | `1.3` | Logo saturation |
 | `lightModuleOpacity` | number | `0.5` | White overlay opacity 0-1 blended over light bar spaces. Higher values improve scannability with dark logos; lower values show more logo color. |
+| `imageMode` | string | `'fill'` | How the logo fills the barcode canvas: `'fill'` stretches the image to fit; `'clip'` scales to cover and crops the overflow (preserves aspect ratio) |
 
 **Returns:** Same shape as QRCode (`canvas`, `toSVG()`, `toDataURL()`, `download()`)
 

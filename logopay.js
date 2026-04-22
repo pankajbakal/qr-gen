@@ -278,12 +278,25 @@
 
   // ═══════════════════════════════════════════════════════════════
   //  INTERNAL: Render logo background onto a canvas
+  //  mode: 'fill' — stretch image to fill canvas (default)
+  //        'clip' — scale image to cover canvas, crop overflow
   // ═══════════════════════════════════════════════════════════════
-  function _renderLogoBackground(imgEl, width, height, brightness, saturation) {
+  function _renderLogoBackground(imgEl, width, height, brightness, saturation, mode) {
     const c = _makeCanvas(width, height);
     const ctx = c.getContext('2d');
     ctx.filter = `brightness(${brightness || 1.1}) saturate(${saturation || 1.3})`;
-    ctx.drawImage(imgEl, 0, 0, width, height);
+    if (mode === 'clip') {
+      const iw = imgEl.naturalWidth  || imgEl.width;
+      const ih = imgEl.naturalHeight || imgEl.height;
+      const ratio = Math.max(width / iw, height / ih);
+      const sw = width  / ratio;
+      const sh = height / ratio;
+      const sx = (iw - sw) / 2;
+      const sy = (ih - sh) / 2;
+      ctx.drawImage(imgEl, sx, sy, sw, sh, 0, 0, width, height);
+    } else {
+      ctx.drawImage(imgEl, 0, 0, width, height);
+    }
     return c;
   }
 
@@ -305,6 +318,7 @@
    *   logoBrightness {number}          Logo brightness filter (default 1.1)
    *   logoSaturation {number}          Logo saturation filter (default 1.3)
    *   lightModuleOpacity {number}      White overlay opacity 0-1 over QR data area (default 0.5)
+   *   imageMode     {string}           How to fit logo: 'fill' (stretch, default) or 'clip' (cover/crop)
    *
    * @returns {object}  { canvas, toSVG(), toDataURL(type), download(filename, type) }
    */
@@ -320,6 +334,7 @@
       logoBrightness: 1.1,
       logoSaturation: 1.3,
       lightModuleOpacity: 0.5,
+      imageMode: 'fill',
     }, options);
 
     if (!opts.text) throw new Error('LogoPay.QRCode: text is required');
@@ -340,7 +355,7 @@
 
     // Logo background (if provided)
     if (opts.image) {
-      const logoBg = _renderLogoBackground(opts.image, canvasPx, canvasPx, opts.logoBrightness, opts.logoSaturation);
+      const logoBg = _renderLogoBackground(opts.image, canvasPx, canvasPx, opts.logoBrightness, opts.logoSaturation, opts.imageMode);
       ctx.drawImage(logoBg, 0, 0);
       // Blend a white layer over the QR data area so that light modules remain
       // clearly brighter than dark modules even when the logo contains dark areas.
@@ -385,10 +400,7 @@
 
       // Embed logo as base64 image if provided
       if (opts.image) {
-        const imgCanvas = _makeCanvas(svgSize, svgSize);
-        const imgCtx = imgCanvas.getContext('2d');
-        imgCtx.filter = `brightness(${opts.logoBrightness}) saturate(${opts.logoSaturation})`;
-        imgCtx.drawImage(opts.image, 0, 0, svgSize, svgSize);
+        const imgCanvas = _renderLogoBackground(opts.image, svgSize, svgSize, opts.logoBrightness, opts.logoSaturation, opts.imageMode);
         const b64 = imgCanvas.toDataURL('image/png');
         parts.push(`<image x="0" y="0" width="${svgSize}" height="${svgSize}" xlink:href="${b64}"/>`);
         // White overlay over QR data area to ensure light modules stay scannable
@@ -462,6 +474,7 @@
    *   logoBrightness {number}          (default 1.1)
    *   logoSaturation {number}          (default 1.3)
    *   lightModuleOpacity {number}      White overlay opacity 0-1 (default 0.5)
+   *   imageMode     {string}           How to fit logo: 'fill' (stretch, default) or 'clip' (cover/crop)
    *
    * @returns {object}  { canvas, toSVG(), toDataURL(type), download(filename, type) }
    */
@@ -479,6 +492,7 @@
       logoBrightness: 1.1,
       logoSaturation: 1.3,
       lightModuleOpacity: 0.5,
+      imageMode: 'fill',
     }, options);
 
     if (!opts.text) throw new Error('LogoPay.Barcode: text is required');
@@ -502,7 +516,7 @@
 
     // Logo background
     if (opts.image) {
-      const logoBg = _renderLogoBackground(opts.image, canvasW, barH, opts.logoBrightness, opts.logoSaturation);
+      const logoBg = _renderLogoBackground(opts.image, canvasW, barH, opts.logoBrightness, opts.logoSaturation, opts.imageMode);
       ctx.drawImage(logoBg, 0, 0);
       // White overlay so light spaces between bars stay clearly brighter than bars
       const alpha = Math.max(0, Math.min(1, opts.lightModuleOpacity));
@@ -539,10 +553,7 @@
       parts.push(`<rect width="${canvasW}" height="${canvasH}" fill="white"/>`);
 
       if (opts.image) {
-        const imgCanvas = _makeCanvas(canvasW, barH);
-        const imgCtx = imgCanvas.getContext('2d');
-        imgCtx.filter = `brightness(${opts.logoBrightness}) saturate(${opts.logoSaturation})`;
-        imgCtx.drawImage(opts.image, 0, 0, canvasW, barH);
+        const imgCanvas = _renderLogoBackground(opts.image, canvasW, barH, opts.logoBrightness, opts.logoSaturation, opts.imageMode);
         const b64 = imgCanvas.toDataURL('image/png');
         parts.push(`<image x="0" y="0" width="${canvasW}" height="${barH}" xlink:href="${b64}"/>`);
         // White overlay to keep light spaces scannable even with dark logos
