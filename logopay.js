@@ -27,7 +27,7 @@
   } else {
     root.LogoPay = lib;
   }
-}(typeof globalThis !== 'undefined' ? globalThis : typeof self !== 'undefined' ? self : this, function () {
+}(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this), function () {
   'use strict';
 
   // ═══════════════════════════════════════════════════════════════
