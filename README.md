@@ -38,6 +38,7 @@ Generates a logo-filled QR code (ECC Medium, versions 1–7).
 | `cornerRadius` | number | `0.15` | Module corner rounding 0–0.5 |
 | `logoBrightness` | number | `1.1` | Logo brightness filter |
 | `logoSaturation` | number | `1.3` | Logo saturation filter |
+| `lightModuleOpacity` | number | `0.5` | White overlay opacity 0-1 blended over the QR data area to keep light modules clearly brighter than dark modules. Increase toward `1` for better scannability with dark logos; decrease toward `0` for more logo color saturation. |
 
 **Returns:**
 ```js
@@ -85,6 +86,7 @@ Generates a logo-filled Code-128 barcode.
 | `showText` | boolean | `true` | Show text below bars |
 | `logoBrightness` | number | `1.1` | Logo brightness |
 | `logoSaturation` | number | `1.3` | Logo saturation |
+| `lightModuleOpacity` | number | `0.5` | White overlay opacity 0-1 blended over light bar spaces. Higher values improve scannability with dark logos; lower values show more logo color. |
 
 **Returns:** Same shape as QRCode (`canvas`, `toSVG()`, `toDataURL()`, `download()`)
 
@@ -166,10 +168,11 @@ tool.load(imgEl)
 
 1. **White canvas** is drawn as base
 2. **Logo image** is stretched across entire canvas
-3. **Solid dark modules** are stamped on top with the chosen `darkColor`
-4. **White quiet zone** border is restored (required for scanner lock-on)
+3. A **semi-transparent white overlay** (controlled by `lightModuleOpacity`) is blended over the data area so light modules remain clearly brighter than dark modules even when the logo contains dark areas
+4. **Solid dark modules** are stamped on top with the chosen `darkColor`
+5. **White quiet zone** border is restored (required for scanner lock-on)
 
-Dark modules are always solid and never modified, so the QR/barcode remains fully scannable by any standard scanner.
+Dark modules are always solid and never modified. The white overlay in step 3 ensures light modules stay distinguishable from dark modules regardless of logo content, keeping the QR/barcode reliably scannable.
 
 ---
 

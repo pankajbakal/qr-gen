@@ -304,6 +304,7 @@
    *   cornerRadius  {number}           Module corner radius 0-0.5 (default 0.15)
    *   logoBrightness {number}          Logo brightness filter (default 1.1)
    *   logoSaturation {number}          Logo saturation filter (default 1.3)
+   *   lightModuleOpacity {number}      White overlay opacity 0-1 over QR data area (default 0.5)
    *
    * @returns {object}  { canvas, toSVG(), toDataURL(type), download(filename, type) }
    */
@@ -318,6 +319,7 @@
       cornerRadius: 0.15,
       logoBrightness: 1.1,
       logoSaturation: 1.3,
+      lightModuleOpacity: 0.5,
     }, options);
 
     if (!opts.text) throw new Error('LogoPay.QRCode: text is required');
@@ -340,6 +342,12 @@
     if (opts.image) {
       const logoBg = _renderLogoBackground(opts.image, canvasPx, canvasPx, opts.logoBrightness, opts.logoSaturation);
       ctx.drawImage(logoBg, 0, 0);
+      // Blend a white layer over the QR data area so that light modules remain
+      // clearly brighter than dark modules even when the logo contains dark areas.
+      // This ensures the code stays scannable regardless of logo content.
+      const alpha = Math.max(0, Math.min(1, opts.lightModuleOpacity));
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.fillRect(quiet * modPx, quiet * modPx, qrSize * modPx, qrSize * modPx);
     } else {
       ctx.fillStyle = opts.lightColor;
       ctx.fillRect(0, 0, canvasPx, canvasPx);
@@ -383,6 +391,11 @@
         imgCtx.drawImage(opts.image, 0, 0, svgSize, svgSize);
         const b64 = imgCanvas.toDataURL('image/png');
         parts.push(`<image x="0" y="0" width="${svgSize}" height="${svgSize}" xlink:href="${b64}"/>`);
+        // White overlay over QR data area to ensure light modules stay scannable
+        const alpha = Math.max(0, Math.min(1, opts.lightModuleOpacity));
+        const qOverlayPx = (quiet * modPx).toFixed(2);
+        const dataOverlayPx = (qrSize * modPx).toFixed(2);
+        parts.push(`<rect x="${qOverlayPx}" y="${qOverlayPx}" width="${dataOverlayPx}" height="${dataOverlayPx}" fill="white" fill-opacity="${alpha}"/>`);
       }
 
       // White quiet zone
@@ -448,6 +461,7 @@
    *   showText      {boolean}          Show text below bars (default true)
    *   logoBrightness {number}          (default 1.1)
    *   logoSaturation {number}          (default 1.3)
+   *   lightModuleOpacity {number}      White overlay opacity 0-1 (default 0.5)
    *
    * @returns {object}  { canvas, toSVG(), toDataURL(type), download(filename, type) }
    */
@@ -464,6 +478,7 @@
       showText: true,
       logoBrightness: 1.1,
       logoSaturation: 1.3,
+      lightModuleOpacity: 0.5,
     }, options);
 
     if (!opts.text) throw new Error('LogoPay.Barcode: text is required');
@@ -489,6 +504,10 @@
     if (opts.image) {
       const logoBg = _renderLogoBackground(opts.image, canvasW, barH, opts.logoBrightness, opts.logoSaturation);
       ctx.drawImage(logoBg, 0, 0);
+      // White overlay so light spaces between bars stay clearly brighter than bars
+      const alpha = Math.max(0, Math.min(1, opts.lightModuleOpacity));
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.fillRect(0, 0, canvasW, barH);
     } else {
       ctx.fillStyle = opts.lightColor;
       ctx.fillRect(0, 0, canvasW, canvasH);
@@ -526,6 +545,9 @@
         imgCtx.drawImage(opts.image, 0, 0, canvasW, barH);
         const b64 = imgCanvas.toDataURL('image/png');
         parts.push(`<image x="0" y="0" width="${canvasW}" height="${barH}" xlink:href="${b64}"/>`);
+        // White overlay to keep light spaces scannable even with dark logos
+        const alpha = Math.max(0, Math.min(1, opts.lightModuleOpacity));
+        parts.push(`<rect x="0" y="0" width="${canvasW}" height="${barH}" fill="white" fill-opacity="${alpha}"/>`);
       }
 
       for (let i = 0; i < totalBits; i++) {
