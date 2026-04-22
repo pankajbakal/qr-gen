@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LogoPay.js — Example Application</title>
+<script src="logopay.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    padding: 32px 16px;
+  }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+  h1 span { color: #f0a500; }
+  .subtitle { color: #666; margin-bottom: 36px; font-size: 15px; }
+
+  /* Section layout */
+  .section {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    padding: 28px;
+    max-width: 700px;
+    margin: 0 auto 28px;
+  }
+  .section h2 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    font-size: 11px;
+    background: #f0a50022;
+    color: #b07800;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-weight: 600;
+  }
+
+  /* Form controls */
+  label { display: block; font-size: 13px; color: #555; margin-bottom: 4px; margin-top: 14px; }
+  label:first-child { margin-top: 0; }
+  input[type="text"], input[type="number"], textarea, select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .2s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: #f0a500; }
+  textarea { resize: vertical; }
+  input[type="range"] { width: 100%; accent-color: #f0a500; }
+  input[type="color"] { width: 48px; height: 34px; padding: 2px; border: 1.5px solid #e0e0e0; border-radius: 6px; cursor: pointer; }
+  .row { display: flex; gap: 12px; align-items: flex-end; }
+  .row > * { flex: 1; }
+
+  /* File upload */
+  .file-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border: 1.5px dashed #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #555;
+    transition: border-color .2s, color .2s;
+    margin-top: 14px;
+  }
+  .file-label:hover { border-color: #f0a500; color: #b07800; }
+  .file-label input { display: none; }
+  .preview-img { display: none; max-height: 56px; max-width: 100%; border-radius: 6px; margin-top: 8px; object-fit: contain; background: #f5f5f7; }
+
+  /* Generate button */
+  .btn {
+    margin-top: 18px;
+    padding: 11px 24px;
+    background: #f0a500;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btn:hover { background: #d48f00; }
+
+  /* Output */
+  .output {
+    display: none;
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid #eee;
+  }
+  .output-canvas-wrap {
+    background: #f0f0f0;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 120px;
+  }
+  .output-canvas-wrap canvas { max-width: 100%; height: auto; display: block; }
+  .dl-row {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .dl-btn {
+    padding: 7px 16px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color .2s, color .2s;
+  }
+  .dl-btn:hover { border-color: #f0a500; color: #b07800; }
+  .dl-btn.primary { background: #f0a500; color: #fff; border-color: #f0a500; }
+  .dl-btn.primary:hover { background: #d48f00; }
+
+  .error {
+    display: none;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #fff0f0;
+    border: 1px solid #ffc0c0;
+    border-radius: 8px;
+    color: #c00;
+    font-size: 13px;
+  }
+
+  /* Code block */
+  .code-wrap {
+    background: #1d1d1f;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-top: 18px;
+    overflow-x: auto;
+  }
+  pre {
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #a8d8a8;
+    white-space: pre;
+  }
+  pre .kw  { color: #f0a500; }
+  pre .str { color: #ff9966; }
+  pre .cm  { color: #666; }
+  pre .fn  { color: #88aaff; }
+  pre .num { color: #66cc99; }
+</style>
+</head>
+<body>
+
+<div style="max-width:700px;margin:0 auto 0;">
+  <h1>Logo<span>Pay</span>.js</h1>
+  <p class="subtitle">Logo-infused QR Code &amp; Barcode Generation — Example Application</p>
+</div>
+
+<!-- ─── QR CODE ─────────────────────────────────────────────── -->
+<section class="section">
+  <h2>QR Code <span class="badge">LogoPay.QRCode</span></h2>
+
+  <label>Text / URL to encode</label>
+  <textarea id="qrText" rows="2" placeholder="https://pay.example.com/invoice/0088">https://pay.example.com/invoice/0088</textarea>
+
+  <label>Logo image (optional)</label>
+  <label class="file-label">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Upload logo
+    <input type="file" accept="image/*" id="qrLogoInput" onchange="previewLogo(this,'qrLogoPreview','qrLogoImg')">
+  </label>
+  <img id="qrLogoPreview" class="preview-img" alt="logo preview">
+
+  <div class="row" style="margin-top:14px;">
+    <div>
+      <label>Output size (px)</label>
+      <input type="number" id="qrSize" value="400" min="100" max="2000">
+    </div>
+    <div>
+      <label>Dark color</label>
+      <input type="color" id="qrDark" value="#000000">
+    </div>
+    <div>
+      <label>Corner radius (0–0.45)</label>
+      <input type="range" id="qrRadius" min="0" max="0.45" step="0.05" value="0.15">
+    </div>
+  </div>
+
+  <button class="btn" onclick="generateQR()">Generate QR Code →</button>
+
+  <div class="error" id="qrError"></div>
+
+  <div class="output" id="qrOutput">
+    <div class="output-canvas-wrap" id="qrCanvasWrap"></div>
+    <div class="dl-row">
+      <button class="dl-btn primary" onclick="qrResult.download('qr-code','png')">↓ PNG</button>
+      <button class="dl-btn" onclick="qrResult.download('qr-code','jpeg')">↓ JPEG</button>
+      <button class="dl-btn" onclick="qrResult.download('qr-code','webp')">↓ WebP</button>
+      <button class="dl-btn" onclick="qrResult.download('qr-code','svg')">↓ SVG</button>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <pre><span class="cm">// 1. Include the library</span>
+<span class="cm">// &lt;script src="logopay.js"&gt;&lt;/script&gt;</span>
+
+<span class="kw">const</span> img = <span class="kw">new</span> <span class="fn">Image</span>();
+img.src = <span class="str">'logo.png'</span>;
+img.onload = () => {
+  <span class="kw">const</span> qr = LogoPay.<span class="fn">QRCode</span>({
+    text:         <span class="str">'https://pay.example.com/invoice/0088'</span>,
+    image:        img,          <span class="cm">// logo fills light modules</span>
+    size:         <span class="num">400</span>,         <span class="cm">// output px (square)</span>
+    darkColor:    <span class="str">'#000000'</span>,
+    cornerRadius: <span class="num">0.15</span>,        <span class="cm">// rounded module corners</span>
+  });
+
+  document.body.<span class="fn">appendChild</span>(qr.canvas);   <span class="cm">// display</span>
+  qr.<span class="fn">download</span>(<span class="str">'qr-code'</span>, <span class="str">'png'</span>);          <span class="cm">// save PNG</span>
+  qr.<span class="fn">download</span>(<span class="str">'qr-code'</span>, <span class="str">'svg'</span>);          <span class="cm">// save SVG</span>
+
+  <span class="cm">// Meta info: version, size, matrix</span>
+  console.<span class="fn">log</span>(qr.meta);
+};</pre>
+  </div>
+</section>
+
+<!-- ─── BARCODE ────────────────────────────────────────────── -->
+<section class="section">
+  <h2>Code-128 Barcode <span class="badge">LogoPay.Barcode</span></h2>
+
+  <label>Text to encode (printable ASCII)</label>
+  <input type="text" id="barText" value="INV-2024-0088" placeholder="INV-2024-0088">
+
+  <label>Logo image (optional)</label>
+  <label class="file-label">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Upload logo
+    <input type="file" accept="image/*" id="barLogoInput" onchange="previewLogo(this,'barLogoPreview','barLogoImg')">
+  </label>
+  <img id="barLogoPreview" class="preview-img" alt="logo preview">
+
+  <div class="row" style="margin-top:14px;">
+    <div>
+      <label>Width (px)</label>
+      <input type="number" id="barWidth" value="600" min="200" max="2000">
+    </div>
+    <div>
+      <label>Height (px)</label>
+      <input type="number" id="barHeight" value="150" min="60" max="600">
+    </div>
+    <div>
+      <label>Bar scale (1–6)</label>
+      <input type="range" id="barScale" min="1" max="6" step="1" value="3">
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>Bar color</label>
+      <input type="color" id="barDark" value="#000000">
+    </div>
+    <div>
+      <label>Show text below bars</label>
+      <select id="barShowText">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn" onclick="generateBarcode()">Generate Barcode →</button>
+
+  <div class="error" id="barError"></div>
+
+  <div class="output" id="barOutput">
+    <div class="output-canvas-wrap" id="barCanvasWrap"></div>
+    <div class="dl-row">
+      <button class="dl-btn primary" onclick="barResult.download('barcode','png')">↓ PNG</button>
+      <button class="dl-btn" onclick="barResult.download('barcode','jpeg')">↓ JPEG</button>
+      <button class="dl-btn" onclick="barResult.download('barcode','webp')">↓ WebP</button>
+      <button class="dl-btn" onclick="barResult.download('barcode','svg')">↓ SVG</button>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <pre><span class="kw">const</span> bc = LogoPay.<span class="fn">Barcode</span>({
+  text:      <span class="str">'INV-2024-0088'</span>,
+  image:     img,          <span class="cm">// optional logo</span>
+  width:     <span class="num">600</span>,
+  height:    <span class="num">150</span>,
+  barScale:  <span class="num">3</span>,           <span class="cm">// px per narrow bar unit</span>
+  darkColor: <span class="str">'#000000'</span>,
+  showText:  <span class="kw">true</span>,         <span class="cm">// render text below bars</span>
+});
+
+document.body.<span class="fn">appendChild</span>(bc.canvas);
+bc.<span class="fn">download</span>(<span class="str">'barcode'</span>, <span class="str">'svg'</span>);</pre>
+  </div>
+</section>
+
+<!-- ─── IMAGE TOOL ─────────────────────────────────────────── -->
+<section class="section">
+  <h2>Image Tool <span class="badge">LogoPay.ImageTool</span></h2>
+
+  <label>Source image</label>
+  <label class="file-label">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Upload image
+    <input type="file" accept="image/*" id="imgInput" onchange="previewLogo(this,'imgSrcPreview','imgFile')">
+  </label>
+  <img id="imgSrcPreview" class="preview-img" alt="source preview">
+
+  <div class="row" style="margin-top:14px;">
+    <div>
+      <label>Output width (px)</label>
+      <input type="number" id="imgW" value="512" min="1" max="4000">
+    </div>
+    <div>
+      <label>Output height (px)</label>
+      <input type="number" id="imgH" value="512" min="1" max="4000">
+    </div>
+    <div>
+      <label>Resize mode</label>
+      <select id="imgMode">
+        <option value="fill">Fill (crop center)</option>
+        <option value="fit">Fit (letterbox)</option>
+        <option value="stretch">Stretch</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn" onclick="processImage()">Process Image →</button>
+
+  <div class="error" id="imgError"></div>
+
+  <div class="output" id="imgOutput">
+    <div class="output-canvas-wrap" id="imgCanvasWrap"></div>
+    <div class="dl-row">
+      <button class="dl-btn primary" onclick="imgTool.download('image','png')">↓ PNG</button>
+      <button class="dl-btn" onclick="imgTool.download('image','jpeg')">↓ JPEG</button>
+      <button class="dl-btn" onclick="imgTool.download('image','webp')">↓ WebP</button>
+      <button class="dl-btn" onclick="imgTool.download('image','svg')">↓ SVG</button>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <pre><span class="cm">// Resize &amp; convert a File from &lt;input type="file"&gt;</span>
+<span class="kw">const</span> tool = LogoPay.<span class="fn">ImageTool</span>();
+tool.<span class="fn">load</span>(fileInput.files[<span class="num">0</span>])
+  .then(t => t.<span class="fn">resize</span>(<span class="num">512</span>, <span class="num">512</span>, <span class="str">'fill'</span>))
+  .then(t => {
+    t.<span class="fn">download</span>(<span class="str">'thumbnail'</span>, <span class="str">'png'</span>);
+    t.<span class="fn">download</span>(<span class="str">'thumbnail'</span>, <span class="str">'svg'</span>);   <span class="cm">// SVG with embedded raster</span>
+    t.<span class="fn">download</span>(<span class="str">'thumbnail'</span>, <span class="str">'webp'</span>);
+  });
+
+<span class="cm">// Crop then resize</span>
+tool.<span class="fn">load</span>(imgEl)
+  .then(t => {
+    t.<span class="fn">crop</span>(<span class="num">50</span>, <span class="num">50</span>, <span class="num">300</span>, <span class="num">300</span>);
+    t.<span class="fn">resize</span>(<span class="num">256</span>, <span class="num">256</span>, <span class="str">'stretch'</span>);
+    t.<span class="fn">download</span>(<span class="str">'cropped'</span>, <span class="str">'jpeg'</span>);
+  });</pre>
+  </div>
+</section>
+
+<script>
+// ── Shared state ───────────────────────────────────────────────
+var qrLogoImg  = null;
+var barLogoImg = null;
+var imgFile    = null;
+var qrResult   = null;
+var barResult  = null;
+var imgTool    = null;
+
+// ── Logo preview + image load helper ──────────────────────────
+function previewLogo(input, previewId, stateVar) {
+  var file = input.files[0];
+  if (!file) return;
+
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    // Update preview
+    var prev = document.getElementById(previewId);
+    prev.src = ev.target.result;
+    prev.style.display = 'block';
+
+    // Store as HTMLImageElement for QR/Barcode, or raw File for ImageTool
+    if (stateVar === 'imgFile') {
+      imgFile = file;
+    } else {
+      var img = new Image();
+      img.onload = function() {
+        if (stateVar === 'qrLogoImg')  qrLogoImg  = img;
+        if (stateVar === 'barLogoImg') barLogoImg = img;
+      };
+      img.src = ev.target.result;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── QR Code ────────────────────────────────────────────────────
+function generateQR() {
+  var errBox = document.getElementById('qrError');
+  errBox.style.display = 'none';
+  try {
+    var text = document.getElementById('qrText').value.trim();
+    if (!text) throw new Error('Please enter text or a URL to encode.');
+
+    qrResult = LogoPay.QRCode({
+      text:         text,
+      image:        qrLogoImg,
+      size:         parseInt(document.getElementById('qrSize').value, 10) || 400,
+      darkColor:    document.getElementById('qrDark').value,
+      cornerRadius: parseFloat(document.getElementById('qrRadius').value),
+    });
+
+    var wrap = document.getElementById('qrCanvasWrap');
+    wrap.innerHTML = '';
+    wrap.appendChild(qrResult.canvas);
+    document.getElementById('qrOutput').style.display = 'block';
+  } catch (e) {
+    errBox.textContent = e.message || String(e);
+    errBox.style.display = 'block';
+  }
+}
+
+// ── Barcode ────────────────────────────────────────────────────
+function generateBarcode() {
+  var errBox = document.getElementById('barError');
+  errBox.style.display = 'none';
+  try {
+    var text = document.getElementById('barText').value.trim();
+    if (!text) throw new Error('Please enter text to encode.');
+
+    barResult = LogoPay.Barcode({
+      text:      text,
+      image:     barLogoImg,
+      width:     parseInt(document.getElementById('barWidth').value, 10) || 600,
+      height:    parseInt(document.getElementById('barHeight').value, 10) || 150,
+      barScale:  parseInt(document.getElementById('barScale').value, 10) || 3,
+      darkColor: document.getElementById('barDark').value,
+      showText:  document.getElementById('barShowText').value === '1',
+    });
+
+    var wrap = document.getElementById('barCanvasWrap');
+    wrap.innerHTML = '';
+    wrap.appendChild(barResult.canvas);
+    document.getElementById('barOutput').style.display = 'block';
+  } catch (e) {
+    errBox.textContent = e.message || String(e);
+    errBox.style.display = 'block';
+  }
+}
+
+// ── Image Tool ─────────────────────────────────────────────────
+function processImage() {
+  var errBox = document.getElementById('imgError');
+  errBox.style.display = 'none';
+  if (!imgFile) {
+    errBox.textContent = 'Please upload an image first.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  var w    = parseInt(document.getElementById('imgW').value, 10) || 512;
+  var h    = parseInt(document.getElementById('imgH').value, 10) || 512;
+  var mode = document.getElementById('imgMode').value;
+
+  imgTool = LogoPay.ImageTool();
+  imgTool.load(imgFile)
+    .then(function(t) { return t.resize(w, h, mode); })
+    .then(function(t) {
+      imgTool = t;
+      var wrap = document.getElementById('imgCanvasWrap');
+      wrap.innerHTML = '';
+      wrap.appendChild(t.toCanvas());
+      document.getElementById('imgOutput').style.display = 'block';
+    })
+    .catch(function(e) {
+      errBox.textContent = e.message || String(e);
+      errBox.style.display = 'block';
+    });
+}
+</script>
+</body>
+</html>
